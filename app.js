@@ -826,8 +826,8 @@ function renderServiceOptions() {
   }).join('');
 }
 
-// ─── Slideshow Seção Cortes ────────────────────────
-// Busca as fotos da galeria salvas no painel admin (config/galeria) e monta o slideshow
+// ─── Carrossel Seção "Nosso Trabalho" ──────────────
+// Busca as fotos da galeria salvas no painel admin (config/galeria) e monta o carrossel contínuo.
 async function carregarGaleria() {
   try {
     const doc = await firebase.firestore().collection('config').doc('galeria').get();
@@ -839,48 +839,50 @@ async function carregarGaleria() {
   initSlideshow();
 }
 
+// Carrossel "esteira": as fotos deslizam sem parar, num loop contínuo e suave (sem trocas bruscas).
+// Feito só com CSS (@keyframes), então roda liso mesmo em celulares mais fracos.
 function initSlideshow() {
-  const slider   = document.getElementById('cortes-slider');
-  const secao    = document.getElementById('cortes-section');
-  // Se não houver elemento de slider ou fotos cadastradas no painel, esconde a seção
+  const slider = document.getElementById('cortes-slider');
+  const secao  = document.getElementById('cortes-section');
+  // Se não houver elemento de carrossel ou fotos cadastradas no painel, esconde a seção
   if (!slider || !HERO_SLIDES.length) {
     if (secao) secao.style.display = 'none';
     return;
   }
   if (secao) secao.style.display = '';
+
   // Limpa o que já existia (caso a galeria seja recarregada) antes de montar de novo
   slider.innerHTML = '';
-  const wrapAntigo = slider.parentElement;
-  const counterAntigo = wrapAntigo ? wrapAntigo.querySelector('.cortes-counter') : null;
-  if (counterAntigo) counterAntigo.remove();
+  slider.classList.add('cortes-marquee');
+  slider.style.animation = 'none'; // reseta pra não "pular" ao recarregar
 
-  const total = HERO_SLIDES.length;
-  let current = 0, autoTimer;
+  // Com só 1 foto não dá pra rolar de forma contínua sem repetir logo em seguida — mostra parada.
+  if (HERO_SLIDES.length === 1) {
+    slider.classList.remove('cortes-marquee');
+    const div = document.createElement('div');
+    div.className = 'cortes-slide';
+    div.style.backgroundImage = 'url(' + HERO_SLIDES[0] + ')';
+    slider.appendChild(div);
+    return;
+  }
 
-  HERO_SLIDES.forEach(src => {
+  // Duplica a lista de fotos: quando a "primeira volta" termina, a segunda cópia
+  // já está exatamente no mesmo lugar visualmente, e o loop reinicia sem soluço.
+  const fotos = HERO_SLIDES.concat(HERO_SLIDES);
+  fotos.forEach(src => {
     const div = document.createElement('div');
     div.className = 'cortes-slide';
     div.style.backgroundImage = 'url(' + src + ')';
     slider.appendChild(div);
   });
 
-  const wrap = slider.parentElement;
-  const counter = document.createElement('div');
-  counter.className = 'cortes-counter';
-  counter.textContent = '1 / ' + total;
-  wrap.appendChild(counter);
-
-  function goTo(idx) {
-    current = (idx + total) % total;
-    slider.style.transform = 'translateX(-' + (current * 100) + '%)';
-    counter.textContent = (current + 1) + ' / ' + total;
-  }
-  function resetAuto() {
-    clearInterval(autoTimer);
-    autoTimer = setInterval(function() { goTo(current + 1); }, 4500);
-  }
-
-  resetAuto();
+  // Velocidade proporcional à quantidade de fotos, pra manter o mesmo ritmo visual
+  // sempre (mais fotos = mais tempo pra completar uma volta inteira).
+  const duracao = Math.max(HERO_SLIDES.length * 4.5, 14);
+  // Força reflow antes de reativar a animação (garante que o "animation: none" acima tenha efeito)
+  void slider.offsetWidth;
+  slider.style.animation = '';
+  slider.style.animationDuration = duracao + 's';
 }
 
 // ─── Gera slots de horário ─────────────────────────
@@ -1307,7 +1309,7 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarPrecosServicos(); // atualiza os preços com o que foi salvo no painel admin
   carregarFormasPagamento(); // formas de pagamento (Pix, dinheiro, cartão...) salvas no painel admin
   carregarAjustesRemotos().then(mudou => { if (mudou) aplicarAjustesNoSite(); }); // nome, logo, WhatsApp e planos do painel
-  carregarGaleria(); // carrega as fotos do painel admin e monta o slideshow (esconde a seção se não houver fotos)
+  carregarGaleria(); // carrega as fotos do painel admin e monta o carrossel contínuo (esconde a seção se não houver fotos)
 
   // Sessão
   currentUser = loadSession();
