@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title data-marca="nome">Meu Studio de Unhas</title>
+  <!-- Ícones Android / Desktop -->
+  <link rel="icon" type="image/png" sizes="512x512" href="logo_512.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="logo_192.png"/>
+  <link rel="icon" type="image/png" href="logo_512.png"/>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest-client.json"/>
+  <meta name="theme-color" content="#1E1310"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Meu Studio de Unhas" data-marca-attr="content:nome"/>
+  <!-- Ícones Apple (iOS/iPadOS) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="logo_180.png"/>
+  <link rel="apple-touch-icon" sizes="192x192" href="logo_192.png"/>
+  <link rel="apple-touch-icon" sizes="512x512" href="logo_512.png"/>
+
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- Configuração da barbearia (nome, WhatsApp, Firebase, serviços e planos): edite só o config.js -->
+  <script src="config.js"></script>
+  <script>
+    firebase.initializeApp(BARBEARIA.firebase);
+  </script>
+
+  <style>
+    /* ── Nav Logo ── */
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .nav-logo-img { height: 46px; width: auto; display: block; }
+    .nav-logo-text { display: flex; flex-direction: column; line-height: 1.05; }
+    .nav-logo-text strong {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 700; font-size: 19px; color: #F1EAD6; letter-spacing: .5px;
+    }
+    .nav-logo-text em {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic; font-weight: 700; font-size: 15px; color: #C97D5C; letter-spacing: 1.5px;
+    }
+    @media (max-width: 768px) {
+      .nav-logo-img { height: 38px; }
+      .nav-logo-text strong { font-size: 16px; }
+      .nav-logo-text em { font-size: 13px; }
+    }
+  </style>
+
+  <style>
+    /* ── Logo do topo ── */
+    .hero-content { position: relative; }
+    .hero-title {
+      margin: 0;
+      line-height: 0;
+    }
+    .hero-logo {
+      width: min(250px, 56vw);
+      max-height: 40svh;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+      filter: drop-shadow(0 18px 40px rgba(0,0,0,0.55));
+    }
+    /* Nome sob o emblema (texto real, no lugar da imagem com "Barbearia") */
+    .hero-name { display: block; text-align: center; margin-top: 14px; line-height: 1; }
+    /* A letra do nome vem do estilo escolhido em Ajustes → "Letra do nome no topo".
+       O config.js preenche as variáveis --topo1-* e --topo2-*; o que está depois da vírgula é o estilo Clássico (reserva). */
+    .hero-title .hero-name-top {
+      display: block; margin: 0;
+      font-family: var(--topo1-fonte, 'Oswald', sans-serif); font-weight: var(--topo1-peso, 400); font-style: var(--topo1-estilo, normal);
+      font-size: var(--topo1-tam, clamp(30px, 8.5vw, 48px)); letter-spacing: var(--topo1-espaco, 7px);
+      text-transform: var(--topo1-caixa, uppercase); color: #F1EAD6;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.55), 0 6px 22px rgba(0,0,0,0.75);
+    }
+    .hero-title .hero-name-bottom {
+      display: block; margin: var(--topo2-mt, 8px) 0 0;
+      font-family: var(--topo2-fonte, 'Playfair Display', Georgia, serif); font-style: var(--topo2-estilo, italic); font-weight: var(--topo2-peso, 700);
+      font-size: var(--topo2-tam, clamp(44px, 12.5vw, 72px)); letter-spacing: var(--topo2-espaco, 8px);
+      text-transform: var(--topo2-caixa, uppercase); color: #C97D5C;
+      text-shadow: 0 3px 0 rgba(0,0,0,0.6), 0 8px 26px rgba(0,0,0,0.75), 0 0 28px rgba(201, 125, 92,0.30);
+    }
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px;
+      margin: -1px; padding: 0; overflow: hidden;
+      clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    .hero-title, .hero-sub, .btn-hero { position: relative; z-index: 2; }
+  </style>
+
+  <style>
+    /* ── agd-status badges ── */
+    .agd-status { display:inline-block; margin-top:4px; padding:2px 10px; border-radius:3px; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:1px; }
+    .agd-status.agendado   { background:rgba(201, 125, 92,.15); color:#C97D5C; }
+    .agd-status.confirmado { background:rgba(39,174,96,.15);   color:#27ae60; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="hero">
+    <div class="hero-bg"></div>
+    <nav class="navbar">
+      <a href="#" class="nav-logo" aria-label="Meu Studio de Unhas" data-marca-attr="aria-label:nome">
+        <img src="logo_emblema.png" alt="" class="nav-logo-img" data-logo/>
+        <span class="nav-logo-text"><strong data-marca="linha1">Minha</strong><em data-marca="linha2">Studio</em></span>
+      </a>
+      <!-- Hamburger mobile -->
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="nav-links">
+        <a href="#servicos" onclick="closeMenu()">Serviços</a>
+        <a href="#planos" onclick="closeMenu()">Planos</a>
+        <a href="#agendar" class="btn-nav" onclick="closeMenu()">Agendar</a>
+      </div>
+    </nav>
+
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <img src="logo_emblema.png" alt="" class="hero-logo" data-logo/>
+        <span class="hero-name" aria-hidden="true">
+          <span class="hero-name-top" data-marca="linha1">Minha</span>
+          <span class="hero-name-bottom" data-marca="linha2">Studio</span>
+        </span>
+        <span class="visually-hidden" data-marca="nome">Meu Studio de Unhas</span>
+      </h1>
+      <p class="hero-sub"><span class="hero-sub-item">Unhas</span><span class="hero-sub-dot">·</span><span class="hero-sub-item">Esmaltação</span><span class="hero-sub-dot">·</span><span class="hero-sub-item">Estilo</span></p>
+      <a href="#agendar" class="btn-hero">Agendar Horário</a>
+    </div>
+    <div class="hero-scroll">▼</div>
+  </header>
+
+  <!-- SERVIÇOS -->
+  <section id="servicos" class="section services-section">
+    <div class="section-header">
+      <span class="section-tag">NOSSOS</span>
+      <h2>Serviços</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="services-grid" id="services-grid"></div>
+  </section>
+
+  <!-- GALERIA DE FOTOS -->
+  <section id="cortes-section" class="section cortes-section">
+    <div class="section-header">
+      <span class="section-tag">NOSSO</span>
+      <h2>Trabalho</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="cortes-slider-wrap">
+      <div class="cortes-slider" id="cortes-slider"></div>
+      <button class="cortes-arrow cortes-prev" id="cortes-prev" aria-label="Foto anterior">&lsaquo;</button>
+      <button class="cortes-arrow cortes-next" id="cortes-next" aria-label="Próxima foto">&rsaquo;</button>
+      <div class="cortes-dots" id="cortes-dots"></div>
+    </div>
+  </section>
+
+  <!-- PLANOS -->
+  <section id="planos" class="section plans-section">
+    <div class="section-header">
+      <span class="section-tag">NOSSOS</span>
+      <h2>Planos</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="plans-grid" id="plans-grid"></div>
+  </section>
+
+  <!-- AUTH BAR -->
+  <div class="auth-bar-wrap">
+    <div class="auth-bar" id="auth-bar">
+      <!-- preenchido via JS -->
+    </div>
+  </div>
+
+  <!-- AGENDAMENTO -->
+  <section id="agendar" class="section booking-section">
+    <div class="section-header">
+      <span class="section-tag">FAÇA SEU</span>
+      <h2>Agendamento</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="booking-container">
+      <div class="booking-card">
+
+        <div class="step-indicator">
+          <div class="step active" id="step-ind-1"><span>1</span><p>Serviço</p></div>
+          <div class="step-line"></div>
+          <div class="step" id="step-ind-2"><span>2</span><p>Dados</p></div>
+          <div class="step-line"></div>
+          <div class="step" id="step-ind-3"><span>3</span><p>Confirmar</p></div>
+        </div>
+
+        <!-- Passo 1 -->
+        <div class="form-step active" id="step-1">
+          <h3>Escolha o Serviço</h3>
+          <div class="options-list" id="options-list"></div>
+        </div>
+
+        <!-- Passo 2 -->
+        <div class="form-step" id="step-2">
+          <h3>Seus Dados</h3>
+          <div class="form-group">
+            <label>Nome e Sobrenome *</label>
+            <input type="text" id="client-name" placeholder="Nome e sobrenome"
+              autocomplete="name" autocorrect="off" autocapitalize="words"/>
+          </div>
+          <div class="form-group">
+            <label>WhatsApp *</label>
+            <input type="tel" id="client-phone" placeholder="(85) 99999-9999"
+              maxlength="15" inputmode="tel" autocomplete="tel"/>
+          </div>
+          <div class="form-group">
+            <label>Data Preferida *</label>
+            <input type="date" id="pref-date" style="display:none;"/>
+            <div id="cal-wrap" style="background:#271915;border:1px solid #543731;border-radius:8px;padding:16px;"></div>
+          </div>
+          <div class="form-group">
+            <label>Horário Preferido *</label>
+            <select id="pref-time" disabled>
+              <option value="">Selecione uma data primeiro</option>
+            </select>
+          </div>
+          <div class="form-group" id="pagamento-form-group">
+            <label>Forma de Pagamento *</label>
+            <div class="options-list" id="pagamento-options-list"></div>
+          </div>
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea id="obs" placeholder="Algo que queira nos informar..." rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <button class="btn-back" onclick="goBack(1)">← Voltar</button>
+            <button class="btn-next" onclick="goToConfirm()">Continuar →</button>
+          </div>
+        </div>
+
+        <!-- Passo 3 -->
+        <div class="form-step" id="step-3">
+          <h3>Confirmar Agendamento</h3>
+          <div class="confirm-summary" id="confirm-summary"></div>
+          <div id="confirm-pix-box" style="display:none;"></div>
+          <div class="form-row">
+            <button class="btn-back" onclick="goBack(2)">← Voltar</button>
+            <button class="btn-confirm" onclick="submitBooking()">✓ Confirmar</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL LOGIN / CADASTRO -->
+  <div class="modal-overlay" id="login-modal">
+    <div class="modal-box login-modal-box">
+      <div class="modal-icon">💅</div>
+      <h3>Entrar / Cadastrar</h3>
+
+      <!-- Passo 1: telefone -->
+      <div class="login-step active" id="login-step-phone">
+        <p>Digite seu WhatsApp para entrar ou criar sua conta.</p>
+        <div class="form-group" style="text-align:left;margin-top:16px;">
+          <label>WhatsApp *</label>
+          <input type="tel" id="login-phone-input" placeholder="(85) 99999-9999"
+            maxlength="15" inputmode="tel" autocomplete="tel"/>
+        </div>
+        <p class="login-error" id="login-error-phone"></p>
+        <button class="btn-confirm" id="btn-login-next" onclick="loginCheckPhone()" style="margin-top:8px;width:100%;">Continuar →</button>
+        <button class="btn-back" onclick="closeLoginModal()" style="margin-top:8px;width:100%;">Fechar</button>
+      </div>
+
+      <!-- Passo 2: nome (só para novos) -->
+      <div class="login-step" id="login-step-name">
+        <p>Primeira vez por aqui! Qual o seu nome completo?</p>
+        <div class="form-group" style="text-align:left;margin-top:16px;">
+          <label>Nome e Sobrenome *</label>
+          <input type="text" id="login-name-input" placeholder="Nome e sobrenome"
+            autocomplete="name" autocorrect="off" autocapitalize="words"/>
+        </div>
+        <div class="form-group" style="text-align:left;margin-top:12px;">
+          <label style="display:flex;align-items:center;gap:6px;">
+            Data de Nascimento
+            <span style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:1px;color:#8D7670;text-transform:uppercase;background:#38231F;padding:2px 8px;border-radius:3px;">opcional</span>
+          </label>
+          <input type="date" id="login-birth-input"
+            style="color-scheme:dark;"
+            placeholder="dd/mm/aaaa"/>
+        </div>
+        <p class="login-error" id="login-error-name"></p>
+        <button class="btn-confirm" id="btn-login-register" onclick="loginRegister()" style="margin-top:8px;width:100%;">Cadastrar →</button>
+        <button class="btn-back" onclick="closeLoginModal()" style="margin-top:8px;width:100%;">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MEUS AGENDAMENTOS -->
+  <div class="modal-overlay" id="mybookings-modal">
+    <div class="modal-box mybookings-modal-box">
+      <div class="modal-icon">📋</div>
+      <h3>Meus Agendamentos</h3>
+      <div id="mybookings-list"></div>
+      <button class="btn-back" onclick="closeMyBookings()" style="margin-top:20px;width:100%;">Fechar</button>
+    </div>
+  </div>
+
+  <!-- MODAL PLANO -->
+  <div class="modal-overlay" id="plan-modal">
+    <div class="modal-box plan-modal-box">
+      <div class="modal-icon plan-modal-icon">✦</div>
+      <h3 id="plan-modal-title">Plano Essencial</h3>
+      <p id="plan-modal-desc">Ótima escolha! Antes de continuar, tem alguma dúvida sobre o plano? Pode perguntar agora — ou clique em <strong>Falar com a Gente</strong> e um de nós te responde pelo WhatsApp.</p>
+      <textarea id="plan-modal-question" placeholder="Escreva sua dúvida aqui (opcional)..." rows="3"></textarea>
+      <div class="plan-modal-actions">
+        <button class="btn-plan-cancel" onclick="closePlanModal()">Fechar</button>
+        <a id="plan-modal-wa" class="btn-plan-confirm" href="#" target="_blank">Falar com a Gente →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SUCESSO -->
+  <div class="modal-overlay" id="success-modal">
+    <div class="modal-box">
+      <div class="modal-icon">✓</div>
+      <h3>Agendamento Enviado!</h3>
+      <p>Seu pedido foi registrado com sucesso.</p>
+      <div id="success-pix-box" style="display:none;"></div>
+      <button onclick="closeModal()">Fechar</button>
+    </div>
+  </div>
+
+  <!-- OVERLAY MENU MOBILE -->
+  <div class="nav-overlay" id="nav-overlay" onclick="closeMenu()"></div>
+
+  <footer class="footer">
+    <p><span data-marca="nome">Meu Studio de Unhas</span> &copy; <span data-marca="ano">2026</span>. Todos os direitos reservados.</p>
+  </footer>
+
+  <script>aplicarMarca();</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Menu hamburger
+    const hamburger = document.getElementById('nav-hamburger');
+    const navLinks  = document.getElementById('nav-links');
+    const overlay   = document.getElementById('nav-overlay');
+
+    hamburger.addEventListener('click', () => {
+      const open = navLinks.classList.toggle('open');
+      hamburger.classList.toggle('open', open);
+      overlay.classList.toggle('open', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+    });
+
+    function closeMenu() {
+      navLinks.classList.remove('open');
+      hamburger.classList.remove('open');
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Service worker PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .catch(e => console.warn('SW:', e));
+      });
+    }
+  </script>
+<script>
+/* Logo: fundo quadrado vira medalhão redondo (detecção automática) */
+(function () {
+  // Forma da logo:
+  //   'redonda'  → sempre recorta em círculo (ideal para emblemas redondos sobre fundo quadrado)
+  //   'auto'     → detecta sozinho: logo com fundo sólido vira redonda; logo transparente fica como está
+  //   'original' → não mexe na forma da logo
+  var FORMA = 'auto';
+
+  // Fundo da tela inicial usando as cores do tema (sem azul fixo)
+  var CORRIGIR_FUNDO_HERO = false; // o style.css já usa as cores do tema
+
+  var css = '';
+
+  if (CORRIGIR_FUNDO_HERO) {
+    css += [
+      '.hero .hero-bg {',
+      '  background:',
+      '    repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 28px),',
+      '    repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 84px),',
+      '    linear-gradient(180deg, var(--dark2) 0%, var(--black) 100%);',
+      '}',
+      '@supports (background: color-mix(in srgb, red 50%, transparent)) {',
+      '  .hero .hero-bg {',
+      '    background:',
+      '      radial-gradient(ellipse at 50% 32%, color-mix(in srgb, var(--gray) 28%, transparent) 0%, transparent 62%),',
+      '      repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 28px),',
+      '      repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 84px),',
+      '      linear-gradient(180deg, var(--dark2) 0%, var(--black) 100%);',
+      '  }',
+      '}',
+      ''
+    ].join('\n');
+  }
+
+  css += [
+    /* forma geral (site e painel) */
+    'img[data-logo].logo-medalhao { border-radius: 50%; object-fit: cover; aspect-ratio: 1 / 1; object-view-box: inset(2%); }',
+    'img[data-logo].logo-cartao { border-radius: 14px; object-fit: cover; }',
+
+    /* tela inicial */
+    '.hero-logo.logo-medalhao {',
+    '  width: min(240px, 58vw); height: auto; max-height: none; filter: none; margin: 0 auto 18px;',
+    '  box-shadow: 0 18px 50px rgba(0,0,0,0.65);',
+    '  box-shadow:',
+    '    0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),',
+    '    0 0 0 8px color-mix(in srgb, var(--accent) 7%, transparent),',
+    '    0 22px 55px rgba(0,0,0,0.65),',
+    '    0 0 90px color-mix(in srgb, var(--accent) 12%, transparent);',
+    '}',
+    '.hero-logo.logo-cartao { border-radius: 16px; }',
+
+    /* menu do topo */
+    '.nav-logo-img.logo-medalhao { width: 46px; height: 46px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }',
+    '@media (max-width: 768px) { .nav-logo-img.logo-medalhao { width: 38px; height: 38px; } }'
+  ].join('\n');
+
+  // ── Decide a forma de cada logo ─────────────────────────────────────────────
+  function quadrada(w, h) { return Math.abs(w / h - 1) < 0.15; }
+
+  // Lê 4 cantinhos da imagem: se todos forem opacos, a logo tem fundo sólido (é uma "foto" quadrada)
+  function detectar(img, w, h) {
+    try {
+      var n = 40, cv = document.createElement('canvas');
+      cv.width = cv.height = n;
+      var ctx = cv.getContext('2d');
+      ctx.drawImage(img, 0, 0, n, n);
+      var cantos = [[1, 1], [n - 2, 1], [1, n - 2], [n - 2, n - 2]];
+      var solido = cantos.every(function (p) { return ctx.getImageData(p[0], p[1], 1, 1).data[3] > 235; });
+      if (!solido) return 'original';
+      return quadrada(w, h) ? 'redonda' : 'cartao';
+    } catch (e) {
+      return 'original'; // o navegador bloqueou a leitura (arquivo aberto direto do disco)
+    }
+  }
+
+  function aplicar(img) {
+    var w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) return;
+    var modo = FORMA === 'auto' ? detectar(img, w, h) : FORMA;
+    if (modo === 'redonda' && !quadrada(w, h)) modo = 'cartao';
+    img.classList.remove('logo-medalhao', 'logo-cartao');
+    if (modo === 'redonda') img.classList.add('logo-medalhao');
+    else if (modo === 'cartao') img.classList.add('logo-cartao');
+  }
+
+  function registrar(img) {
+    if (!img.dataset.formaOk) {
+      img.dataset.formaOk = '1';
+      img.addEventListener('load', function () { aplicar(img); }); // roda de novo se a logo for trocada
+      if (FORMA === 'redonda') img.classList.add('logo-medalhao');  // já nasce redonda, sem "piscar" quadrada
+    }
+    if (img.complete) aplicar(img);
+  }
+
+  function iniciar() {
+    var st = document.createElement('style');
+    st.id = 'ajuste-visual';
+    st.textContent = css;
+    document.head.appendChild(st);
+    document.querySelectorAll('img[data-logo]').forEach(registrar);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
+  else iniciar();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() { return request.auth != null && request.auth.token.email == 'admin@smnalsdesigner.com'; }
+
+    match /agendamentos/{id} {
+      allow read: if true;
+      allow create: if isAdmin() || (
+           request.resource.data.keys().hasOnly(
+             ['tipo','servico','preco','cliente','telefone','data','horario','obs','formaPagamento','status','criadoEm'])
+        && request.resource.data.status == 'agendado'
+        && request.resource.data.cliente is string
+        && request.resource.data.cliente.size() < 100);
+      allow update: if isAdmin() || (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','canceladoEm'])
+          && request.resource.data.status == 'cancelado');
+      allow delete: if isAdmin();
+    }
+
+    match /clientes/{tel} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isAdmin() || request.resource.data.keys().hasOnly(
+          ['nome','telefone','nascimento','criadoEm']);
+      allow update, delete: if isAdmin();
+    }
+
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /_config/{doc} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
